@@ -1,0 +1,13 @@
+{
+  "name": "discord-ticket-bot",
+  "version": "1.0.0",
+  "description": "Simple Discord ticket bot with dropdown, claim, lock, close buttons and stats",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "minecraft-server-util": "^5.4.4"
+  }
+}
