@@ -63,52 +63,92 @@ new SlashCommandBuilder().setName("bank").setDescription("Bank balance"),
 new SlashCommandBuilder()
 .setName("deposit")
 .setDescription("Deposit coins")
-.addIntegerOption(o=>o.setName("amount").setRequired(true)),
+.addIntegerOption(o=>
+  o.setName("amount")
+  .setDescription("Amount to deposit")
+  .setRequired(true)
+),
 
 new SlashCommandBuilder()
 .setName("withdraw")
 .setDescription("Withdraw coins")
-.addIntegerOption(o=>o.setName("amount").setRequired(true)),
+.addIntegerOption(o=>
+  o.setName("amount")
+  .setDescription("Amount to withdraw")
+  .setRequired(true)
+),
 
 new SlashCommandBuilder().setName("shop").setDescription("View shop"),
 
 new SlashCommandBuilder()
 .setName("buy")
 .setDescription("Buy item")
-.addStringOption(o=>o.setName("item").setRequired(true)),
+.addStringOption(o=>
+  o.setName("item")
+  .setDescription("Item to buy")
+  .setRequired(true)
+),
 
 new SlashCommandBuilder()
 .setName("sell")
 .setDescription("Sell item")
-.addStringOption(o=>o.setName("item").setRequired(true)),
+.addStringOption(o=>
+  o.setName("item")
+  .setDescription("Item to sell")
+  .setRequired(true)
+),
 
 new SlashCommandBuilder().setName("inventory").setDescription("Inventory"),
 
 new SlashCommandBuilder()
 .setName("trade")
 .setDescription("Trade item")
-.addUserOption(o=>o.setName("user").setRequired(true))
-.addStringOption(o=>o.setName("item").setRequired(true)),
+.addUserOption(o=>
+  o.setName("user")
+  .setDescription("User to trade with")
+  .setRequired(true)
+)
+.addStringOption(o=>
+  o.setName("item")
+  .setDescription("Item to trade")
+  .setRequired(true)
+),
 
 new SlashCommandBuilder()
 .setName("coinbet")
 .setDescription("Coin bet")
-.addIntegerOption(o=>o.setName("amount").setRequired(true)),
+.addIntegerOption(o=>
+  o.setName("amount")
+  .setDescription("Coins to bet")
+  .setRequired(true)
+),
 
 new SlashCommandBuilder()
 .setName("slots")
 .setDescription("Slots")
-.addIntegerOption(o=>o.setName("bet").setRequired(true)),
+.addIntegerOption(o=>
+  o.setName("bet")
+  .setDescription("Coins to bet")
+  .setRequired(true)
+),
 
 new SlashCommandBuilder()
 .setName("blackjack")
 .setDescription("Blackjack")
-.addIntegerOption(o=>o.setName("bet").setRequired(true)),
+.addIntegerOption(o=>
+  o.setName("bet")
+  .setDescription("Coins to bet")
+  .setRequired(true)
+),
 
 new SlashCommandBuilder()
 .setName("mcstatus")
 .setDescription("Check Minecraft server")
-.addStringOption(o=>o.setName("ip").setRequired(true)),
+.addStringOption(o=>
+  o.setName("ip")
+  .setDescription("Minecraft server IP")
+  .setRequired(true)
+),
 
 new SlashCommandBuilder().setName("coinflip").setDescription("Flip coin"),
 new SlashCommandBuilder().setName("joke").setDescription("Tell joke"),
