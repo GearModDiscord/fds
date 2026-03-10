@@ -1,8 +1,8 @@
 const { 
-Client, 
-GatewayIntentBits, 
-SlashCommandBuilder, 
-REST, 
+Client,
+GatewayIntentBits,
+SlashCommandBuilder,
+REST,
 Routes,
 ActionRowBuilder,
 StringSelectMenuBuilder,
@@ -16,15 +16,27 @@ TextInputStyle
 } = require("discord.js");
 
 const util = require("minecraft-server-util");
-const readline = require("readline");
+
+/* ANTI CRASH */
+
+process.on("uncaughtException", err => {
+console.error("Uncaught Exception:", err);
+});
+
+process.on("unhandledRejection", err => {
+console.error("Unhandled Rejection:", err);
+});
 
 /* CONFIG */
 
 const TOKEN = process.env.TOKEN;
 const CLIENT_ID = "1479616798847406090";
 const GUILD_ID = "1472651115223847026";
+
 const STAFF_ROLE_ID = "1472651115618242615";
-const GENERAL_CHANNEL_ID = "1472651116801163336";
+const LOG_CHANNEL_ID = "1472651116985585770";
+
+const INACTIVE_TIME = 1000 * 60 * 30;
 
 /* CLIENT */
 
@@ -32,131 +44,19 @@ const client = new Client({
 intents:[
 GatewayIntentBits.Guilds,
 GatewayIntentBits.GuildMessages,
-GatewayIntentBits.MessageContent,
 GatewayIntentBits.GuildMembers
 ]
 });
-
-/* DATA */
-
-const economy = new Map();
-const bank = new Map();
-const inventory = new Map();
-const spamMap = new Map();
-
-/* SHOP */
-
-const shop={
-cookie:{price:50},
-diamond:{price:200},
-vip:{price:500}
-};
 
 /* COMMANDS */
 
 const commands=[
 
-new SlashCommandBuilder().setName("balance").setDescription("Check balance"),
-new SlashCommandBuilder().setName("daily").setDescription("Daily coins"),
-new SlashCommandBuilder().setName("bank").setDescription("Bank balance"),
-
 new SlashCommandBuilder()
-.setName("deposit")
-.setDescription("Deposit coins")
-.addIntegerOption(o=>
-  o.setName("amount")
-  .setDescription("Amount to deposit")
-  .setRequired(true)
-),
-
-new SlashCommandBuilder()
-.setName("withdraw")
-.setDescription("Withdraw coins")
-.addIntegerOption(o=>
-  o.setName("amount")
-  .setDescription("Amount to withdraw")
-  .setRequired(true)
-),
-
-new SlashCommandBuilder().setName("shop").setDescription("View shop"),
-
-new SlashCommandBuilder()
-.setName("buy")
-.setDescription("Buy item")
-.addStringOption(o=>
-  o.setName("item")
-  .setDescription("Item to buy")
-  .setRequired(true)
-),
-
-new SlashCommandBuilder()
-.setName("sell")
-.setDescription("Sell item")
-.addStringOption(o=>
-  o.setName("item")
-  .setDescription("Item to sell")
-  .setRequired(true)
-),
-
-new SlashCommandBuilder().setName("inventory").setDescription("Inventory"),
-
-new SlashCommandBuilder()
-.setName("trade")
-.setDescription("Trade item")
-.addUserOption(o=>
-  o.setName("user")
-  .setDescription("User to trade with")
-  .setRequired(true)
-)
-.addStringOption(o=>
-  o.setName("item")
-  .setDescription("Item to trade")
-  .setRequired(true)
-),
-
-new SlashCommandBuilder()
-.setName("coinbet")
-.setDescription("Coin bet")
-.addIntegerOption(o=>
-  o.setName("amount")
-  .setDescription("Coins to bet")
-  .setRequired(true)
-),
-
-new SlashCommandBuilder()
-.setName("slots")
-.setDescription("Slots")
-.addIntegerOption(o=>
-  o.setName("bet")
-  .setDescription("Coins to bet")
-  .setRequired(true)
-),
-
-new SlashCommandBuilder()
-.setName("blackjack")
-.setDescription("Blackjack")
-.addIntegerOption(o=>
-  o.setName("bet")
-  .setDescription("Coins to bet")
-  .setRequired(true)
-),
-
-new SlashCommandBuilder()
-.setName("mcstatus")
-.setDescription("Check Minecraft server")
-.addStringOption(o=>
-  o.setName("ip")
-  .setDescription("Minecraft server IP")
-  .setRequired(true)
-),
-
-new SlashCommandBuilder().setName("coinflip").setDescription("Flip coin"),
-new SlashCommandBuilder().setName("joke").setDescription("Tell joke"),
-new SlashCommandBuilder().setName("panel").setDescription("Ticket panel")
+.setName("panel")
+.setDescription("Open ticket panel")
 
 ].map(c=>c.toJSON());
-
-/* REGISTER COMMANDS */
 
 const rest=new REST({version:"10"}).setToken(TOKEN);
 
@@ -170,76 +70,16 @@ Routes.applicationGuildCommands(CLIENT_ID,GUILD_ID),
 /* READY */
 
 client.on("ready",()=>{
-
 console.log(`Logged in as ${client.user.tag}`);
-
-const guild=client.guilds.cache.get(GUILD_ID);
-
-setInterval(()=>{
-
-const count=guild.memberCount;
-
-const channel=guild.channels.cache.find(c=>c.name.startsWith("👥 Members"));
-
-if(channel) channel.setName(`👥 Members: ${count}`);
-
-},60000);
-
-/* CONSOLE CHAT */
-
-const rl=readline.createInterface({
-input:process.stdin,
-output:process.stdout
 });
 
-rl.on("line",msg=>{
-const ch=client.channels.cache.get(GENERAL_CHANNEL_ID);
-if(ch) ch.send(`🖥 Console: ${msg}`);
-});
+/* COMMAND */
 
-});
+client.on("interactionCreate",async interaction=>{
 
-/* AUTOMOD */
+if(!interaction.isChatInputCommand()) return;
 
-client.on("messageCreate",async m=>{
-
-if(m.author.bot) return;
-
-const now=Date.now();
-const data=spamMap.get(m.author.id)||{count:0,last:now};
-
-data.count++;
-
-if(now-data.last>5000) data.count=1;
-
-data.last=now;
-spamMap.set(m.author.id,data);
-
-if(data.count>5){
-await m.delete().catch(()=>{});
-m.channel.send(`⚠️ ${m.author} stop spamming`);
-}
-
-if(m.content.includes("http")){
-if(!m.member.roles.cache.has(STAFF_ROLE_ID)){
-await m.delete().catch(()=>{});
-m.channel.send("🚫 Links not allowed");
-}
-}
-
-});
-
-/* COMMANDS */
-
-client.on("interactionCreate",async i=>{
-
-if(!i.isChatInputCommand()) return;
-
-const id=i.user.id;
-
-/* PANEL */
-
-if(i.commandName==="panel"){
+if(interaction.commandName==="panel"){
 
 const menu=new StringSelectMenuBuilder()
 .setCustomId("ticket_menu")
@@ -247,12 +87,13 @@ const menu=new StringSelectMenuBuilder()
 .addOptions([
 {label:"Support",value:"support"},
 {label:"Report User",value:"report"},
-{label:"Ban Appeal",value:"appeal"}
+{label:"Ban Appeal",value:"appeal"},
+{label:"Staff Application",value:"staff"}
 ]);
 
 const row=new ActionRowBuilder().addComponents(menu);
 
-return i.reply({
+interaction.reply({
 content:"🎫 Open a ticket",
 components:[row]
 });
@@ -261,17 +102,17 @@ components:[row]
 
 });
 
-/* TICKET MENU */
+/* MENU */
 
 client.on("interactionCreate",async interaction=>{
 
-if(interaction.isStringSelectMenu()){
+if(!interaction.isStringSelectMenu()) return;
 
 if(interaction.customId!=="ticket_menu") return;
 
 const type=interaction.values[0];
 
-/* SUPPORT FORM */
+/* SUPPORT */
 
 if(type==="support"){
 
@@ -298,7 +139,7 @@ return interaction.showModal(modal);
 
 }
 
-/* REPORT FORM */
+/* REPORT */
 
 if(type==="report"){
 
@@ -325,7 +166,7 @@ return interaction.showModal(modal);
 
 }
 
-/* APPEAL FORM */
+/* APPEAL */
 
 if(type==="appeal"){
 
@@ -338,11 +179,6 @@ const version=new TextInputBuilder()
 .setLabel("Java or Bedrock")
 .setStyle(TextInputStyle.Short);
 
-const banid=new TextInputBuilder()
-.setCustomId("banid")
-.setLabel("Ban ID")
-.setStyle(TextInputStyle.Short);
-
 const reason=new TextInputBuilder()
 .setCustomId("reason")
 .setLabel("Why should you be unbanned")
@@ -350,7 +186,6 @@ const reason=new TextInputBuilder()
 
 modal.addComponents(
 new ActionRowBuilder().addComponents(version),
-new ActionRowBuilder().addComponents(banid),
 new ActionRowBuilder().addComponents(reason)
 );
 
@@ -358,17 +193,49 @@ return interaction.showModal(modal);
 
 }
 
+/* STAFF APPLICATION */
+
+if(type==="staff"){
+
+const modal=new ModalBuilder()
+.setCustomId("staff_form")
+.setTitle("Staff Application");
+
+const dcuser=new TextInputBuilder()
+.setCustomId("dcuser")
+.setLabel("Discord Username")
+.setStyle(TextInputStyle.Short);
+
+const mcversion=new TextInputBuilder()
+.setCustomId("mcversion")
+.setLabel("Minecraft Version")
+.setStyle(TextInputStyle.Short);
+
+const why=new TextInputBuilder()
+.setCustomId("why")
+.setLabel("Why should we pick you?")
+.setStyle(TextInputStyle.Paragraph);
+
+modal.addComponents(
+new ActionRowBuilder().addComponents(dcuser),
+new ActionRowBuilder().addComponents(mcversion),
+new ActionRowBuilder().addComponents(why)
+);
+
+return interaction.showModal(modal);
+
 }
 
 });
 
-/* FORM SUBMIT */
+/* MODAL SUBMIT */
 
 client.on("interactionCreate",async interaction=>{
 
 if(!interaction.isModalSubmit()) return;
 
 let text="";
+let isStaff=false;
 
 /* SUPPORT */
 
@@ -378,7 +245,8 @@ text=`🆘 SUPPORT
 
 User: ${interaction.user}
 
-Reason: ${interaction.fields.getTextInputValue("reason")}
+Reason:
+${interaction.fields.getTextInputValue("reason")}
 
 Explanation:
 ${interaction.fields.getTextInputValue("explain")}
@@ -394,7 +262,7 @@ text=`🚨 REPORT
 
 Reporter: ${interaction.user}
 
-Reported user:
+Reported User:
 ${interaction.fields.getTextInputValue("user")}
 
 Reason:
@@ -414,18 +282,41 @@ User: ${interaction.user}
 Version:
 ${interaction.fields.getTextInputValue("version")}
 
-Ban ID:
-${interaction.fields.getTextInputValue("banid")}
-
 Reason:
 ${interaction.fields.getTextInputValue("reason")}
 `;
 
 }
 
+/* STAFF APP */
+
+if(interaction.customId==="staff_form"){
+
+isStaff=true;
+
+text=`🛡 STAFF APPLICATION
+
+Applicant: ${interaction.user}
+
+Discord:
+${interaction.fields.getTextInputValue("dcuser")}
+
+Minecraft Version:
+${interaction.fields.getTextInputValue("mcversion")}
+
+Why we should pick them:
+${interaction.fields.getTextInputValue("why")}
+`;
+
+}
+
+/* CREATE CHANNEL */
+
 const channel=await interaction.guild.channels.create({
-name:`ticket-${interaction.user.username}`,
+
+name:`ticket-${interaction.user.username}-${Math.floor(Math.random()*9999)}`,
 type:ChannelType.GuildText,
+
 permissionOverwrites:[
 {
 id:interaction.guild.id,
@@ -446,9 +337,37 @@ PermissionsBitField.Flags.SendMessages
 ]
 }
 ]
+
 });
 
-const buttons=new ActionRowBuilder().addComponents(
+/* BUTTONS */
+
+let row;
+
+if(isStaff){
+
+row=new ActionRowBuilder().addComponents(
+
+new ButtonBuilder()
+.setCustomId("accept_staff")
+.setLabel("Accept")
+.setStyle(ButtonStyle.Success),
+
+new ButtonBuilder()
+.setCustomId("deny_staff")
+.setLabel("Deny")
+.setStyle(ButtonStyle.Danger),
+
+new ButtonBuilder()
+.setCustomId("close")
+.setLabel("Close")
+.setStyle(ButtonStyle.Secondary)
+
+);
+
+}else{
+
+row=new ActionRowBuilder().addComponents(
 
 new ButtonBuilder()
 .setCustomId("claim")
@@ -462,10 +381,38 @@ new ButtonBuilder()
 
 );
 
+}
+
 channel.send({
 content:text,
-components:[buttons]
+components:[row]
 });
+
+/* LOG */
+
+if(isStaff){
+
+const log=interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
+
+if(log){
+log.send(`📂 New staff application from ${interaction.user}`);
+}
+
+}
+
+/* AUTO CLOSE */
+
+setTimeout(()=>{
+
+if(channel && channel.deletable){
+
+channel.send("🔒 Ticket closed due to inactivity");
+
+setTimeout(()=>channel.delete(),5000);
+
+}
+
+},INACTIVE_TIME);
 
 interaction.reply({
 content:`✅ Ticket created: ${channel}`,
@@ -474,7 +421,7 @@ ephemeral:true
 
 });
 
-/* BUTTONS */
+/* BUTTON HANDLER */
 
 client.on("interactionCreate",async interaction=>{
 
@@ -489,8 +436,32 @@ interaction.reply("Closing ticket...");
 setTimeout(()=>interaction.channel.delete(),3000);
 }
 
+if(interaction.customId==="accept_staff"){
+
+interaction.reply("✅ Application accepted");
+
+const log=interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
+
+if(log){
+log.send(`✅ Staff application accepted in ${interaction.channel}`);
+}
+
+}
+
+if(interaction.customId==="deny_staff"){
+
+interaction.reply("❌ Application denied");
+
+const log=interaction.guild.channels.cache.get(LOG_CHANNEL_ID);
+
+if(log){
+log.send(`❌ Staff application denied in ${interaction.channel}`);
+}
+
+}
+
 });
 
 /* LOGIN */
 
-client.login(TOKEN);
+client.login(TOKEN); 
