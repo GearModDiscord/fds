@@ -168,6 +168,8 @@ return interaction.showModal(modal);
 
 /* APPEAL */
 
+/* APPEAL */
+
 if(type==="appeal"){
 
 const modal=new ModalBuilder()
@@ -179,6 +181,11 @@ const version=new TextInputBuilder()
 .setLabel("Java or Bedrock")
 .setStyle(TextInputStyle.Short);
 
+const banid=new TextInputBuilder()
+.setCustomId("banid")
+.setLabel("Ban ID")
+.setStyle(TextInputStyle.Short);
+
 const reason=new TextInputBuilder()
 .setCustomId("reason")
 .setLabel("Why should you be unbanned")
@@ -186,6 +193,7 @@ const reason=new TextInputBuilder()
 
 modal.addComponents(
 new ActionRowBuilder().addComponents(version),
+new ActionRowBuilder().addComponents(banid),
 new ActionRowBuilder().addComponents(reason)
 );
 
